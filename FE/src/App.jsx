@@ -33,7 +33,7 @@ function App() {
     setWeather(null);
 
     try {
-      const res = await axios.get(`http://localhost:5000/weather?city=${city}`);
+      const res = await axios.get(`https://weather-now-zz21.onrender.com/weather?city=${city}`);
       setWeather(res.data);
     } catch (err) {
       setError("Could not fetch weather data. Please try again.");
