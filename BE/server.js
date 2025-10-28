@@ -12,6 +12,7 @@ app.get("/", (req, res) => {
 });
 
 // Weather route
+// Weather route
 app.get("/weather", async (req, res) => {
   const city = req.query.city;
 
@@ -22,7 +23,7 @@ app.get("/weather", async (req, res) => {
   try {
     // Step 1: Get latitude and longitude using Geocoding API
     const geoResponse = await axios.get(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${city}`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}`
     );
 
     if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
@@ -35,6 +36,10 @@ app.get("/weather", async (req, res) => {
     const weatherResponse = await axios.get(
       `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
     );
+
+    if (!weatherResponse.data.current_weather) {
+      return res.status(500).json({ error: "Weather data unavailable" });
+    }
 
     const { temperature, windspeed, weathercode, time } =
       weatherResponse.data.current_weather;
@@ -55,6 +60,7 @@ app.get("/weather", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch weather data" });
   }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
