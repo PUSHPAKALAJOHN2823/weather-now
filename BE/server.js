@@ -4,14 +4,23 @@ import cors from "cors";
 
 const app = express();
 
-// ✅ CORS config for all requests
+// ✅ Allow requests from any origin (Frontend)
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // ✅ Health check route
 app.get("/", (req, res) => {
-  res.json({ message: "✅ Weather Now backend running fine 🚀" });
+  res.json({ message: "✅ WeatherNow backend is running fine 🚀" });
 });
+
+// ✅ Helper to safely parse JSON (AllOrigins returns string)
+const safeJSON = (data) => {
+  try {
+    return typeof data === "string" ? JSON.parse(data) : data;
+  } catch {
+    return data;
+  }
+};
 
 // ✅ Main weather route
 app.get("/weather", async (req, res) => {
@@ -21,31 +30,40 @@ app.get("/weather", async (req, res) => {
   try {
     console.log(`🌍 Fetching weather for city: ${city}`);
 
-    // 1️⃣ Fetch coordinates
-    const geoURL = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`;
-    const geoResponse = await axios.get(geoURL);
-    console.log("📍 Geo API response:", geoResponse.data);
+    // 1️⃣ Use proxy to avoid Render network timeout (AllOrigins)
+    const geoURL = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+        city
+      )}&count=1`
+    )}`;
 
-    if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
-      console.log("❌ No results found for city:", city);
+    const geoResponse = await axios.get(geoURL, { timeout: 15000 });
+    const geoData = safeJSON(geoResponse.data);
+
+    if (!geoData.results || geoData.results.length === 0) {
+      console.log("❌ City not found:", city);
       return res.status(404).json({ error: "City not found" });
     }
 
-    const { latitude, longitude, name, country } = geoResponse.data.results[0];
-    console.log(`✅ Found coordinates: ${latitude}, ${longitude} for ${name}, ${country}`);
+    const { latitude, longitude, name, country } = geoData.results[0];
+    console.log(`✅ Found coordinates: ${latitude}, ${longitude} (${name}, ${country})`);
 
     // 2️⃣ Fetch weather data
-    const weatherURL = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-    const weatherResponse = await axios.get(weatherURL);
-    console.log("🌦️ Weather API response:", weatherResponse.data);
+    const weatherURL = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+    )}`;
 
-    if (!weatherResponse.data.current_weather) {
-      console.log("❌ No current_weather data found");
+    const weatherResponse = await axios.get(weatherURL, { timeout: 15000 });
+    const weatherData = safeJSON(weatherResponse.data);
+
+    if (!weatherData.current_weather) {
+      console.log("❌ No current weather data found");
       return res.status(502).json({ error: "Weather data unavailable" });
     }
 
-    const { temperature, windspeed, weathercode, time } = weatherResponse.data.current_weather;
+    const { temperature, windspeed, weathercode, time } = weatherData.current_weather;
 
+    // ✅ Return clean JSON
     res.json({
       city: name,
       country,
@@ -60,16 +78,12 @@ app.get("/weather", async (req, res) => {
   } catch (err) {
     console.error("🔥 Error fetching weather:", err.message);
     console.error("Stack trace:", err);
-    console.error("Response:", err.response?.data);
     res.status(500).json({
       error: "Failed to fetch weather data",
       details: err.message,
-      upstream: err.response?.data,
     });
   }
 });
-
-
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
