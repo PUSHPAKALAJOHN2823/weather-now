@@ -20,7 +20,7 @@ steps:
     - '--image'
     - 'gcr.io/$PROJECT_ID/weather-app:latest'
     - '--region'
-    - 'us-central1'
+    - 'us-east1'
     - '--allow-unauthenticated'
 
 # This section fixes the "build.service_account" logging error
