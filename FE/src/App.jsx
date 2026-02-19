@@ -20,7 +20,6 @@ const getWeatherDesc = (code) => {
   return map[code] || "Unknown 🌈";
 };
 
-// Backgrounds based on weather condition
 const getBackground = (code) => {
   if ([0, 1].includes(code)) return "from-yellow-300 via-orange-400 to-pink-500";
   if ([2, 3].includes(code)) return "from-blue-400 via-sky-500 to-indigo-600";
@@ -29,8 +28,6 @@ const getBackground = (code) => {
   return "from-indigo-400 via-sky-400 to-blue-600";
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
 function App() {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
@@ -38,23 +35,29 @@ function App() {
   const [error, setError] = useState("");
 
   const fetchWeather = async () => {
-  if (!city.trim()) return setError("Please enter a city name.");
-  setLoading(true);
-  setError("");
-  setWeather(null);
+    if (!city.trim()) {
+      setError("Please enter a city name.");
+      return;
+    }
 
-  try {
-    const res = await axios.get(
-      `${API_BASE}/weather?city=${encodeURIComponent(city)}`
-    );
-    setWeather(res.data);
-  } catch (err) {
-    console.error("Error fetching weather:", err);
-    setError("Could not fetch weather data. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    setError("");
+    setWeather(null);
+
+    try {
+      // ✅ FIXED: Use relative path
+      const res = await axios.get(
+        `/api/weather?city=${encodeURIComponent(city)}`
+      );
+
+      setWeather(res.data);
+    } catch (err) {
+      console.error("Error fetching weather:", err);
+      setError("Could not fetch weather data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleClose = () => {
     setWeather(null);
@@ -65,34 +68,11 @@ function App() {
   return (
     <div
       className={`min-h-screen flex flex-col items-center justify-center text-white font-sans px-4 py-8 relative overflow-hidden transition-all duration-700 ${
-        weather ? `bg-gradient-to-br ${getBackground(weather.weathercode)}` : "bg-gradient-to-br from-indigo-400 via-sky-400 to-blue-600"
+        weather
+          ? `bg-gradient-to-br ${getBackground(weather.weathercode)}`
+          : "bg-gradient-to-br from-indigo-400 via-sky-400 to-blue-600"
       }`}
     >
-      {/* Animated Weather Icons */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 6, repeat: Infinity }}
-          className="absolute top-10 left-20 text-white/30 text-7xl"
-        >
-          ☁️
-        </motion.div>
-        <motion.div
-          animate={{ y: [0, -15, 0] }}
-          transition={{ duration: 8, repeat: Infinity }}
-          className="absolute bottom-20 right-16 text-white/20 text-8xl"
-        >
-          🌤️
-        </motion.div>
-        <motion.div
-          animate={{ y: [0, 20, 0] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute top-40 right-32 text-white/25 text-6xl"
-        >
-          ☁️
-        </motion.div>
-      </div>
-
       {/* Header */}
       <motion.h1
         initial={{ opacity: 0, y: -40 }}
@@ -103,7 +83,7 @@ function App() {
         Weather<span className="text-yellow-300">Now</span>
       </motion.h1>
 
-      {/* Search Input */}
+      {/* Search Box */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -143,7 +123,6 @@ function App() {
             transition={{ duration: 0.4 }}
             className="relative bg-white/20 text-white backdrop-blur-xl rounded-3xl p-8 w-full sm:w-[420px] shadow-2xl border border-white/30 z-10"
           >
-            {/* Close Button */}
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 text-white/70 hover:text-white transition"
@@ -151,67 +130,62 @@ function App() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* City and Country */}
             <div className="flex items-center justify-center gap-2 mb-4">
               <MapPin className="text-yellow-300 w-6 h-6" />
-              <h2 className="text-2xl font-semibold drop-shadow-sm">
-                {weather.city}, {weather.country}
+              <h2 className="text-2xl font-semibold">
+                {weather.city}
               </h2>
             </div>
 
-            {/* Temperature & Condition */}
             <div className="text-center mb-8">
-              <motion.h3
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="text-7xl font-extrabold text-yellow-300 drop-shadow-lg"
-              >
+              <h3 className="text-7xl font-extrabold text-yellow-300">
                 {weather.temperature}°C
-              </motion.h3>
-              <p className="text-xl mt-2 font-medium text-white/90">
+              </h3>
+              <p className="text-xl mt-2">
                 {getWeatherDesc(weather.weathercode)}
               </p>
             </div>
 
-            {/* Weather Details */}
-            <div className="grid grid-cols-2 gap-6 text-center text-white/90">
-              <div className="flex flex-col items-center">
-                <Wind className="w-7 h-7 text-yellow-300 mb-1" />
+            <div className="grid grid-cols-2 gap-6 text-center">
+              <div>
+                <Wind className="w-7 h-7 text-yellow-300 mb-1 mx-auto" />
                 <span className="font-bold">{weather.windspeed} km/h</span>
-                <span className="text-sm text-white/70">Wind Speed</span>
+                <div className="text-sm">Wind Speed</div>
               </div>
-              <div className="flex flex-col items-center">
-                <Clock className="w-7 h-7 text-yellow-300 mb-1" />
+
+              <div>
+                <Clock className="w-7 h-7 text-yellow-300 mb-1 mx-auto" />
                 <span className="font-bold">
                   {new Date(weather.time).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
                 </span>
-                <span className="text-sm text-white/70">Local Time</span>
+                <div className="text-sm">Local Time</div>
               </div>
-              <div className="flex flex-col items-center">
-                <Droplets className="w-7 h-7 text-yellow-300 mb-1" />
-                <span className="font-bold">{weather.humidity || 60}%</span>
-                <span className="text-sm text-white/70">Humidity</span>
+
+              <div>
+                <Droplets className="w-7 h-7 text-yellow-300 mb-1 mx-auto" />
+                <span className="font-bold">
+                  {weather.humidity || 60}%
+                </span>
+                <div className="text-sm">Humidity</div>
               </div>
-              <div className="flex flex-col items-center">
-                <Gauge className="w-7 h-7 text-yellow-300 mb-1" />
+
+              <div>
+                <Gauge className="w-7 h-7 text-yellow-300 mb-1 mx-auto" />
                 <span className="font-bold">
                   {weather.pressure || 1013} hPa
                 </span>
-                <span className="text-sm text-white/70">Pressure</span>
+                <div className="text-sm">Pressure</div>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Footer */}
       <p className="mt-10 text-white/80 text-sm z-10">
-        © 2025{" "}
-        <span className="font-semibold text-yellow-300">WeatherNow</span> •
-        Powered by Open-Meteo
+        © 2025 <span className="font-semibold text-yellow-300">WeatherNow</span>
       </p>
     </div>
   );
