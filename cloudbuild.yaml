@@ -1,28 +1,30 @@
 steps:
-# Step 1: Build the Docker image
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/weather-app:latest', '.']
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build'
+    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest', '.']
 
-# Step 2: Push the image to the Registry
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Push'
-  args: ['push', 'gcr.io/$PROJECT_ID/weather-app:latest']
+  # Step 2: Push the image to the Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push'
+    args: ['push', 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest']
 
-# Step 3: Deploy to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'Deploy'
-  entrypoint: gcloud
-  args:
-    - 'run'
-    - 'deploy'
-    - 'weather-service'
-    - '--image'
-    - 'gcr.io/$PROJECT_ID/weather-app:latest'
-    - '--region'
-    - 'us-east1'
-    - '--allow-unauthenticated'
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'weather-service'
+      - '--image'
+      - 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest'
+      - '--region'
+      - 'us-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
 
-# This section fixes the "build.service_account" logging error
+# Keep this to avoid logging errors in lab environments
 options:
   logging: CLOUD_LOGGING_ONLY
