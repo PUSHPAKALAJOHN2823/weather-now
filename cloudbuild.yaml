@@ -2,12 +2,14 @@ steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Build'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest', '.']
+    # CHANGE us-west1 to us-central1 (or your working region) below:
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest', '.']
 
   # Step 2: Push the image to the Registry
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push'
-    args: ['push', 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest']
+    # CHANGE us-west1 to us-central1 (or your working region) below:
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest']
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -18,13 +20,14 @@ steps:
       - 'deploy'
       - 'weather-service'
       - '--image'
-      - 'us-west1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest'
+      # CHANGE us-west1 to us-central1 (or your working region) below:
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/weather-now-repo/weather-app:latest'
       - '--region'
-      - 'us-west1'
+      # CHANGE us-west1 to us-central1 (or your working region) below:
+      - 'us-central1'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
 
-# Keep this to avoid logging errors in lab environments
 options:
   logging: CLOUD_LOGGING_ONLY
